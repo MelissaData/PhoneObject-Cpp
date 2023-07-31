@@ -9,7 +9,7 @@ For the latest Melissa Phone Object release notes, please visit: https://release
 
 The console will ask the user for:
 
-- Phone Number
+- Phone 
 
 And return 
 
@@ -20,13 +20,12 @@ And return
 - State
 - Latitude
 - Longitude
-- TimeZone
-- ResultCodes
+- Time Zone
+- Result Codes
 
 ## Tested Environments
-- Windows 64-bit Microsoft Visual C++ 14.34
-- Powershell 5.1
-- Melissa data files for 2023-06
+- Windows 10 64-bit Microsoft Visual C++ 14.34, Powershell 5.1
+- Melissa data files for 2023-07
 - Nmake 14.34
 - Visual Studio 2022 Developer Command Prompt v17.4.2 64-bit
 
@@ -67,7 +66,7 @@ The console will then prompt you with the following warning shown in the image b
 
 #### Download this project
 ```
-$ git clone https://github.com/MelissaData/PhoneObject-Cpp.git
+$ git clone https://github.com/MelissaData/PhoneObject-Cpp
 $ cd PhoneObject-Cpp
 ```
 
