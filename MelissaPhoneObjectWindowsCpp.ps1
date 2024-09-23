@@ -18,7 +18,7 @@ class DLLConfig {
 
 ######################### Config ###########################
 
-$RELEASE_VERSION = '2024.08'
+$RELEASE_VERSION = '2024.09'
 $ProductName = "DQ_PHONE_DATA"
 
 # Uses the location of the .ps1 file 
