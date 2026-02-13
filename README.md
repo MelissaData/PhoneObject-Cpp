@@ -5,7 +5,7 @@ This code showcases the Melissa Phone Object using C++.
 
 Please feel free to copy or embed this code to your own project. Happy coding!
 
-For the latest Melissa Phone Object release notes, please visit: https://releasenotes.melissa.com/on-premise-api/phone-object/
+To view the latest Melissa Phone Object release notes or to subscribe to product notifications, please visit: https://releasenotes.melissa.com/on-premise-api/phone-object/
 
 For further details, please visit: https://docs.melissa.com/on-premise-api/phone-object/phone-object-quickstart.html
 
@@ -26,8 +26,8 @@ And return
 - Result Codes
 
 ## Tested Environments
-- Windows 10 64-bit Microsoft Visual C++ 14.34, Powershell 5.1
-- Melissa data files for 2026-01
+- Windows 11 64-bit Microsoft Visual C++ 14.34, Powershell 5.1
+- Melissa data files for 2026-02
 - Nmake 14.34
 - Visual Studio 2022 Developer Command Prompt v17.4.2 64-bit
 
@@ -68,8 +68,8 @@ The console will then prompt you with the following warning shown in the image b
 
 #### Download this project
 ```
-git clone https://github.com/MelissaData/PhoneObject-Cpp
-cd PhoneObject-Cpp
+git clone https://git.melissadata.com/dtgroup/melissadataobjectexamples/cpp/melissaphoneobjectwindowscpp.git
+cd melissaphoneobjectwindowscpp
 ```
 
 #### Set up Melissa Updater 
