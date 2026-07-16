@@ -68,8 +68,8 @@ The console will then prompt you with the following warning shown in the image b
 
 #### Download this project
 ```
-git clone https://git.melissadata.com/dtgroup/melissadataobjectexamples/cpp/melissaphoneobjectwindowscpp.git
-cd melissaphoneobjectwindowscpp
+git clone https://github.com/MelissaData/PhoneObject-Cpp
+cd PhoneObject-Cpp
 ```
 
 #### Set up Melissa Updater 
