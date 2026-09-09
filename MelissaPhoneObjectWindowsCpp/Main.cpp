@@ -1,3 +1,35 @@
+/**
+ * @file Main.cpp
+ * @brief Phone Object allows websites and custom applications to verify phone numbers down
+ * to 7 and 10 digits, update area codes, and append data about the phone number.
+ *
+ * High-level flow of this sample:
+ *   1. SETUP     - create an mdPhone instance, hand it the license string and the
+ *                  path to the data files, then Initialize() (one time).
+ *   2. INPUT     - feed a phone number in.
+ *   3. PROCESS   - Lookup() validates the number and appends its data.
+ *   4. READ      - pull the results back out with the Get* getters
+ *                  (GetAreaCode, GetCity, GetState, GetTimeZone, ...).
+ *   5. INTERPRET - GetResults() returns comma-separated result codes describing
+ *                  what the object did/found; each code has a human description.
+ *
+ * The pieces of this sample map onto that flow:
+ *   - main / ParseArguments / RunAsConsole : console harness (argument parsing + the interactive loop).
+ *   - PhoneObject     : thin wrapper around mdPhone that owns setup + the call sequence.
+ *   - DataContainer   : plain holder for one record's input and output.
+ *
+ * Where mdPhone comes from:
+ *   There is no generated wrapper source for C++. mdPhone.h and
+ *   mdEnums.h declare the API, mdPhone.lib is the import library the linker resolves
+ *   against, and mdPhone.dll carries the implementation. The accompanying
+ *   MelissaPhoneObjectWindowsCpp.ps1 script downloads all four on every run.
+ *
+ * Reference:
+ *   Quickstart    : https://docs.melissa.com/on-premise-api/phone-object/phone-object-quickstart.html
+ *   Release notes : https://releasenotes.melissa.com/on-premise-api/phone-object/
+ *   Result codes  : https://docs.melissa.com/on-premise-api/phone-object/result-codes.html
+ */
+
 #include <iostream>
 #include <string>
 #include <cstdlib>
@@ -14,9 +46,16 @@ void ParseArguments(string& license, string& testPhone, string& dataPath, int ar
 void RunAsConsole(string license, string testPhone, string dataPath);
 list<string> SplitResultCodes(string s, string delimiter);
 
+/**
+ * Entry point. Reads the optional command-line arguments, then hands control to
+ * RunAsConsole, which performs the actual Phone Object setup and processing.
+ *
+ * @param argc The count of command-line arguments.
+ * @param argv The raw command-line arguments.
+ */
 int main(int argc, char* argv[])
 {
-	// Variables
+	// Populated by ParseArguments below.
 	string license = "";
 	string testPhone = "";
 	string dataPath = "";
@@ -27,6 +66,20 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
+/**
+ * Reads the supported command-line options into the reference parameters.
+ *
+ * Recognized flags (each followed by its value, e.g. "--phone 8002356766"):
+ *   --license / -l   : the Melissa license string
+ *   --phone / -p     : a phone number to test in one-shot mode
+ *   --dataPath / -d  : path to the Phone Object data files
+ *
+ * @param license   Receives the Melissa license string.
+ * @param testPhone Receives the phone number to test in one-shot mode.
+ * @param dataPath  Receives the path to the Phone Object data files.
+ * @param argc      The count of command-line arguments to parse.
+ * @param argv      The raw command-line arguments to parse.
+ */
 void ParseArguments(string& license, string& testPhone, string& dataPath, int argc, char* argv[])
 {
 	for (int i = 1; i < argc; i++)
@@ -55,20 +108,35 @@ void ParseArguments(string& license, string& testPhone, string& dataPath, int ar
 	}
 }
 
+/**
+ * Sets up the Phone Object once, then drives the input -> process -> output cycle.
+ *
+ * In interactive mode (no --phone) it loops, asking for a new phone number each pass
+ * until the user answers "N". In one-shot mode (--phone supplied) it runs a single
+ * pass on testPhone and exits.
+ *
+ * @param license   The Melissa license string used to initialize the object.
+ * @param testPhone A phone number to process in one-shot mode; if empty, the program prompts interactively.
+ * @param dataPath  Path to the Phone Object data files.
+ */
 void RunAsConsole(string license, string testPhone, string dataPath)
 {
 	cout << "\n============ WELCOME TO MELISSA PHONE OBJECT WINDOWS C++ ===========\n" << endl;
 
+	// Construct the wrapper. This is where the object is licensed, pointed at the
+	// data files, and initialized (see the PhoneObject constructor below).
 	PhoneObject* phoneObject = new PhoneObject(license, dataPath);
 
 	bool shouldContinueRunning = true;
 
 	while (shouldContinueRunning)
 	{
+		// Holder for this pass's input and result codes.
 		DataContainer dataContainer = DataContainer();
 
 		if (testPhone.empty())
 		{
+			// Interactive mode: prompt the user for a phone number.
 			cout << "\nFill in each value to see the Phone Object results" << endl;
 			cout << "Phone: ";
 
@@ -79,6 +147,7 @@ void RunAsConsole(string license, string testPhone, string dataPath)
 		}
 		else
 		{
+			// One-shot mode: use the phone number passed on the command line.
 			strcpy_s(dataContainer.Phone, testPhone.c_str());
 		}
 
@@ -87,9 +156,13 @@ void RunAsConsole(string license, string testPhone, string dataPath)
 		cout << "\t                Phone: " + string(dataContainer.Phone)                  << endl;
 
 		// Execute Phone Object
+		// Runs the Lookup and stores the result codes on dataContainer.
 		phoneObject->ExecuteObjectAndResultCodes(dataContainer);
 
 		// Print output
+		// Each Get* getter below returns one component the object produced for the most
+		// recently processed phone number. These read directly from the mdPhone instance,
+		// which still holds the results from the Execute call above.
 		cout << "\n============================== OUTPUT ==============================\n"      << endl;
 		cout << "\n\tPhone Object Information:"                                                 << endl;
 		cout << "\t            Area Code: " + string(phoneObject->mdPhoneObj->GetAreaCode())		<< endl;
@@ -102,6 +175,7 @@ void RunAsConsole(string license, string testPhone, string dataPath)
 		cout << "\t            Time Zone: " + string(phoneObject->mdPhoneObj->GetTimeZone())		<< endl;
 		cout << "\t         Result Codes: " + dataContainer.ResultCodes												  << endl;
 
+		// Other data the Phone Object can return - uncomment any you need:
 		//cout << "\t New Area Code: " + string(phoneObject.mdPhoneObj->GetNewAreaCode())		<< endl;
 		//cout << "\t     Extension: " + string(phoneObject.mdPhoneObj->GetExtension())			<< endl;
 		//cout << "\t    CountyFips: " + string(phoneObject.mdPhoneObj->GetCountyFips())		<< endl;
@@ -112,6 +186,10 @@ void RunAsConsole(string license, string testPhone, string dataPath)
 		//cout << "\t  Country Code: " + string(phoneObject.mdPhoneObj->GetCountryCode())		<< endl;
 		//cout << "\t      Distance: " + string(phoneObject.mdPhoneObj->GetDistance())			<< endl;
 
+		// Result codes come back as a single comma-separated string (e.g. "PS01,PS08").
+		// Split it and ask the object for a readable description of each code.
+		// ResultCodeDescriptionLong requests the long-form text; a short form is also
+		// available via ResultCodeDescriptionShort
 		list<string> rs = SplitResultCodes(dataContainer.ResultCodes, ",");
 		list<string>::iterator it;
 
@@ -122,11 +200,17 @@ void RunAsConsole(string license, string testPhone, string dataPath)
 		}
 
 		bool isValid = false;
+
+		// In one-shot mode there is nothing more to do after a single pass: mark the
+		// input handled and stop the outer loop.
 		if (!testPhone.empty()) 
 		{
 			isValid = true;
 			shouldContinueRunning = false;
 		}
+
+		// Interactive mode: ask whether to process another phone number. Keep prompting
+		// until we get a valid Y/N. "N" ends the program; "Y" falls through to another pass.
 		while (!isValid)
 		{
 			string testAnotherResponse;
@@ -155,12 +239,13 @@ void RunAsConsole(string license, string testPhone, string dataPath)
 	cout << "\n=============== THANK YOU FOR USING MELISSA C++ OBJECT =============\n" << endl;
 }
 
-/// <summary>
-/// This function splits the resultCodes based on a delimiter
-/// </summary>
-/// <param name="s">the resultCode string</param>
-/// <param name="delimiter"the delimiter string></param>
-/// <returns></returns>
+/**
+ * Splits the comma-separated result-code string into individual codes.
+ *
+ * @param s         The result-code string (e.g. "PS01,PS08").
+ * @param delimiter The delimiter string to split on.
+ * @return A list holding each individual result code.
+ */
 list<string> SplitResultCodes(string s, string delimiter) {
 	list<string> resultCodes;
 
@@ -178,149 +263,3 @@ list<string> SplitResultCodes(string s, string delimiter) {
 
 	return resultCodes;
 }
-
-	/*
-	cout << bar;
-
-	char phone[20], zip[15];
-	const char* results;
-
-	double      lat1;             // latitude of first point
-	double      lon1;             // longitude of first point
-	float distance, bearing;
-
-	mdPhone* ph = new mdPhone;
-
-	if (!ph->SetLicenseString(dLICENSE)) {
-		cout << "Error setting License to : " << dLICENSE << endl;
-		cout << "Please contact a sales representative at 1-800-800-6245 x3 for a valid license string" << endl;
-		return 1;
-	}
-
-	if (ph->Initialize(dFILELOC) != mdPhone::ErrorNone) {
-		cout << "Error Initializing mdName: " << ph->GetInitializeErrorString() << endl;
-		return 1;
-	}
-	cout << "     MELISSA DATA PHONE OBJECT C++ EXAMPLE  " << endl;
-	cout << "        Object Initialized: " << ph->GetInitializeErrorString() << endl;
-	cout << "              Build Number: " << ph->GetBuildNumber() << endl;
-	cout << "             Database Date: " << ph->GetDatabaseDate() << endl;
-	cout << "   License Expiration Date: " << ph->GetLicenseExpirationDate() << endl;
-	cout << bar;
-
-	/***************************************************************
-*  Remember, without a valid license, you can only process    *
-*  Nevada numbers - for example:                              *
-		*      PhoneNumber: 702-896-5154                              *
-*	   ZipCode: = 89119                                        *
-		***************************************************************/
-
-		/*
-		cout << " Input Phone (ex: 702-896-5154): ";        cin.getline(phone, sizeof phone);
-		cout << "     Input Zip Code (ex: 89119): ";        cin.getline(zip, sizeof zip);
-
-		ph->Lookup(phone, zip);
-
-		cout << endl << "Results..." << endl;
-		results = ph->GetResults();
-		if ((strstr(results, "PS01") != 0) || (strstr(results, "PS02") != 0))
-		{
-			if (strstr(results, "PS01") != 0)
-				cout << "Phone validated to 10 digits" << endl;
-			else if (strstr(results, "PS02") != 0)
-				cout << "Phone validated to 7 digits" << endl;
-
-			if (strstr(results, "PS07") != 0)
-				cout << "Exchange Type: Cellular" << endl;
-			if (strstr(results, "PS08") != 0)
-				cout << "Exchange Type: Land Line" << endl;
-			else if (strstr(results, "PS09") != 0)
-				cout << "Exchange Type: Voip" << endl;
-
-			if (strstr(results, "PS10") != 0)
-				cout << "Phone Type: Residential" << endl;
-			if (strstr(results, "PS11") != 0)
-				cout << "Phone Type: Business" << endl;
-			if (strstr(results, "PS12") != 0)
-				cout << "Phone Type: Small/Home Office" << endl;
-
-			if (strstr(results, "PS06") != 0)
-				cout << "New Area Code Furnished" << endl;
-
-			cout << endl;
-			cout << "AreaCode    : " << ph->GetAreaCode() << endl;
-			cout << "NewAreaCode : " << ph->GetNewAreaCode() << endl;
-			cout << "Prefix      : " << ph->GetPrefix() << endl;
-			cout << "Suffix      : " << ph->GetSuffix() << endl;
-			cout << "Extension   : " << ph->GetExtension() << endl;
-			cout << endl;
-
-			cout << "City        : " << ph->GetCity() << endl;
-			cout << "State       : " << ph->GetState() << endl;
-			cout << "CountyFips  : " << ph->GetCountyFips() << endl;
-			cout << "CountyName  : " << ph->GetCountyName() << endl;
-			cout << "Msa         : " << ph->GetMsa() << endl;
-			cout << "Pmsa        : " << ph->GetPmsa() << endl;
-			cout << "TimeZone    : " << ph->GetTimeZone() << endl;
-			cout << "TimeZoneCode: " << ph->GetTimeZoneCode() << endl;
-			cout << "CountryCode : " << ph->GetCountryCode() << endl;
-			cout << "Latitude    : " << ph->GetLatitude() << endl;
-			cout << "Longitude   : " << ph->GetLongitude() << endl;
-			cout << "Distance    : " << ph->GetDistance() << endl;
-			cout << endl;
-
-			cout << "==============================================" << endl;
-			cout << "        Distance and Bearing Example" << endl;
-			cout << " Lat / Long of US Capital: 38.889722  -77.0075 " << endl;
-			cout << "==============================================" << endl;
-			lat1 = atof(ph->GetLatitude());
-			lon1 = atof(ph->GetLongitude());
-			distance = ph->ComputeDistance(lat1, lon1, 38.889722, -77.0075);
-			bearing = ph->ComputeBearing(lat1, lon1, 38.889722, -77.0075);
-			cout << " Distance: " << distance << "miles" << endl;
-			cout << "  Bearing: " << bearing << "degrees" << endl;
-			cout << endl;
-
-			ph->CorrectAreaCode(phone, zip);
-			results = ph->GetResults();
-			if (strstr(results, "PS03") != 0)
-			{
-				cout << "===============================" << endl;
-				cout << "  Corrected Area Code Results" << endl;
-				cout << "===============================" << endl;
-				cout << "    Area Code: " << ph->GetAreaCode() << endl;
-				cout << "New Area Code: " << ph->GetNewAreaCode() << endl;
-				cout << "       Prefix: " << ph->GetPrefix() << endl;
-				cout << "       Suffix: " << ph->GetSuffix() << endl;
-				cout << "    Extension: " << ph->GetExtension() << endl;
-			}
-
-		}
-		else if ((strstr(results, "PS04") != 0) || (strstr(results, "PS05") != 0)) {
-			// program could not process the number
-			if (strstr(results, "PS04") != 0)
-				cout << "PS04: Phone number is outside the Demo range (Nevada)" << endl;
-			if (strstr(results, "PS05") != 0)
-				cout << "PS05: Expired Database The database has expired. Contact Melissa Data" << endl;
-
-		}
-		else if (strstr(results, "PE") != 0) {
-			//there was an error validating the number
-			if (strstr(results, "PE01") != 0)
-				cout << "PE01: Bad Area Code" << endl;
-			if (strstr(results, "PE02") != 0)
-				cout << "PE02: Blank Phone Number" << endl;
-			if (strstr(results, "PE03") != 0)
-				cout << "PE03: Too few or too many digits" << endl;
-			if (strstr(results, "PE04") != 0)
-				cout << "PE04: Multiple Match" << endl;
-			if (strstr(results, "PE05") != 0)
-				cout << "PE05: Bad prefix" << endl;
-			if (strstr(results, "PE06") != 0)
-				cout << "PE06: Bad Zip Code" << endl;
-		}
-
-		// clean up after ourselves
-		delete ph;
-		ph = NULL;
-		*/

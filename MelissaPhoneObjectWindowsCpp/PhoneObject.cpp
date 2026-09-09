@@ -2,13 +2,17 @@
 
 PhoneObject::PhoneObject(string license, string dataPath)
 {
-	// Set license string and set path to datafiles (.dat, etc)
+	// Set license string and set path to data files
 	mdPhoneObj->SetLicenseString(license.c_str());
 	dataFilePath = dataPath;
 
-	// If you see a different date than expected, check your license string and either download the new data files or use the Melissa Updater program to update your data files.  
+	// Point the object at the data files and load them. The returned ProgramStatus reports whether initialization succeeded.
+	// If you see a different date than expected, check your license string and either download the new data files
+	// or use the Melissa Updater program to update your data files.
 	mdPhone::ProgramStatus pStatus = mdPhoneObj->Initialize(dataFilePath.c_str());
 
+	// If an issue occurred, please investigate the common causes.
+	// Common causes: an invalid/expired license, or missing/wrong-path data files.
 	if (pStatus != mdPhone::ProgramStatus::ErrorNone)
 	{
 		cout << "Failed to Initialize Object." << endl;
@@ -16,7 +20,12 @@ PhoneObject::PhoneObject(string license, string dataPath)
 		return;
 	}
 
+	// Diagnostic information, handy for confirming the object loaded the data you expect:
+
+	// Build date of the data files
 	cout << "                DataBase Date: " + string(mdPhoneObj->GetDatabaseDate()) << endl;
+
+	// When the license stops working
 	cout << "              Expiration Date: " + string(mdPhoneObj->GetLicenseExpirationDate()) << endl;
 
 	/**
@@ -29,15 +38,17 @@ PhoneObject::PhoneObject(string license, string dataPath)
 // This will call the lookup function to process the input phone as well as generate the result codes
 void PhoneObject::ExecuteObjectAndResultCodes(DataContainer& data)
 {
+	// Validate the number and append its data
 	mdPhoneObj->Lookup(data.Phone, data.ZipCode);
 
+	// Other Phone Object operations, available if you need them:
 	//mdPhoneObj->CorrectAreaCode(data.Phone, data.ZipCode);
 	//mdPhoneObj->ComputeDistance(0.0, 0.0, 0.0, 0.0);
 	//mdPhoneObj->ComputeBearing(0.0, 0.0, 0.0, 0.0);
 
-	data.ResultCodes = mdPhoneObj->GetResults();
-
+	// Collect the result codes for this run
 	// ResultsCodes explain any issues Phone Object has with the object.
 	// List of result codes for Phone Object
-	// https://wiki.melissadata.com/?title=Result_Code_Details#Phone_Object
+	// https://docs.melissa.com/on-premise-api/phone-object/result-codes.html
+	data.ResultCodes = mdPhoneObj->GetResults();
 }
